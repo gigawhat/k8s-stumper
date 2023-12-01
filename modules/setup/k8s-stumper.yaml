@@ -1,0 +1,52 @@
+---
+# k8s service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-stumper
+---
+# k8s secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k8s-stumper
+type: Opaque
+stringData:
+  hello: world
+---
+# k8s deployment that uses the service account and secret
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-stumper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-stumper
+  template:
+    metadata:
+      labels:
+        app: k8s-stumper
+    spec:
+      serviceAccountName: k8s-stumper
+      containers:
+        - name: k8s-stumper
+          image: alpine
+          command: ["/bin/sh"]
+          args:
+            ["-c", "while true; do cat /etc/secret-volume/hello; sleep 10;done"]
+          resources:
+            limits:
+              memory: "128m"
+            requests:
+              memory: "128m"
+              cpu: "50m"
+          volumeMounts:
+            - name: secret-volume
+              mountPath: /etc/secret-volume
+              readOnly: true
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: k8s-stumper
