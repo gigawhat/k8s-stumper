@@ -1,6 +1,6 @@
 # Summary
 
-This terraform module creates a `DOKS`` cluster and deploys broken app to it. The challenge is to fix the app and make it work.
+This terraform module creates a `DOKS` cluster and deploys broken app to it. The challenge is to fix the app to make it run.
 
 ## Usage
 
