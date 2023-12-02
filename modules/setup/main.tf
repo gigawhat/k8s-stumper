@@ -15,18 +15,6 @@ terraform {
   }
 }
 
-provider "digitalocean" {
-
-}
-
-provider "random" {
-
-}
-
-provider "local" {
-
-}
-
 // Create a random pet name to avoid name clashes
 resource "random_pet" "this" {
     length = 2
