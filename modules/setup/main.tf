@@ -35,6 +35,9 @@ resource "digitalocean_kubernetes_cluster" "this" {
         size = "s-2vcpu-2gb"
         node_count = 1
     }
+    lifecycle {
+      ignore_changes = [ version ]
+    }
 }
 
 // Create a kubeconfig file
@@ -49,6 +52,6 @@ resource "null_resource" "this" {
         filename = local_file.this.content
     }
     provisioner "local-exec" {
-        command = "kubectl --kubeconfig=${local_file.this.filename} apply -f ${path.module}/k8s-stumper.yaml"
+        command = "kubectl --kubeconfig=${local_file.this.filename} apply -f ${path.module}/k8s-stumper.yaml 2>/dev/null"
     }
 }

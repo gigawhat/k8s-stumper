@@ -14,6 +14,40 @@ type: Opaque
 stringData:
   hello: world
 ---
+# Configmap that contains bash script
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-stumper
+data:
+  script.sh: |
+    #!/bin/bash
+    while true; do echo ${SECRET}; sleep 10; done
+---
+# Role that allows the service account to read the secret
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: k8s-stumper
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "watch", "list"]
+---
+# Role binding that binds the service account to the role
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: k8s-stumper
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: k8s-stumper
+subjects:
+  - kind: ServiceAccount
+    name: k8s-stumper
+    namespace: default
+---
 # k8s deployment that uses the service account and secret
 apiVersion: apps/v1
 kind: Deployment
@@ -32,10 +66,14 @@ spec:
       serviceAccountName: k8s-stumper
       containers:
         - name: k8s-stumper
-          image: alpine
-          command: ["/bin/sh"]
-          args:
-            ["-c", "while true; do cat /etc/secret-volume/hello; sleep 10;done"]
+          image: debian:latest
+          command: ["/bin/bash", "/etc/script-volume/script.sh"]
+          env:
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-stumper
+                  key: hello
           resources:
             limits:
               memory: "128m"
@@ -43,10 +81,10 @@ spec:
               memory: "128m"
               cpu: "50m"
           volumeMounts:
-            - name: secret-volume
-              mountPath: /etc/secret-volume
+            - name: script-volume
+              mountPath: /etc/script-volume
               readOnly: true
       volumes:
-        - name: secret-volume
-          secret:
-            secretName: k8s-stumper
+        - name: script-volume
+          configMap:
+            name: k8s-stumper
